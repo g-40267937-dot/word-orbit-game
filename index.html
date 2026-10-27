@@ -82,6 +82,9 @@ main{display:grid; grid-template-columns:minmax(0,1.58fr) minmax(320px,.88fr); g
 .teacher-lock{margin-top:12px}
 .teacher-panel{display:none}
 .teacher-panel.unlocked{display:block}
+.teacher-login-form{display:none;gap:10px;margin:12px 0}
+.teacher-login-form.open{display:grid}
+.teacher-login-form input{width:100%}
 
 .planet-btn:hover{filter:brightness(1.08)}
 .p1{left:8%; top:10%}.p2{left:31%; top:22%}.p3{left:61%; top:8%}.p4{left:74%; top:28%}.p5{left:12%; top:42%}
@@ -283,21 +286,18 @@ td{color:#dce3ff}
       </div>
 
 <div class="table-card">
-        <div class="table-title">
-          <h3>🏆 Leaderboard</h3>
-          <span class="note">Top 10 scores</span>
-        </div>
-        <div class="scroll">
-          <table id="leaderboardTable">
-            <thead><tr><th>#</th><th>Name</th><th>Class</th><th>Adventure</th><th>Score</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
+        <div class="table-title"><h3>🏆 Galaxy Progress</h3><span class="note">Teacher-managed records</span></div>
+        <p class="note">Pupil names, classes and scores are kept private. Ask your teacher to view the class leaderboard.</p>
       </div>
 
       <div class="table-card teacher-lock">
         <div class="table-title"><h3>🔒 Teacher Access</h3><button class="secondary" id="teacherLoginBtn">Teacher Login</button></div>
         <p class="note">Teacher records and data controls are hidden from the pupil screen.</p>
+        <div class="teacher-login-form" id="teacherLoginForm">
+          <div class="field"><label for="teacherEmailInput">TEACHER EMAIL</label><input id="teacherEmailInput" type="email" autocomplete="username" placeholder="Teacher email" value="g-40267937@moe-dl.edu.my"></div>
+          <div class="field"><label for="teacherPasswordInput">PASSWORD</label><input id="teacherPasswordInput" type="password" autocomplete="current-password" placeholder="Supabase password"></div>
+          <div class="small-actions"><button class="primary" id="teacherSignInBtn">Sign in</button><button class="secondary" id="teacherCancelBtn">Cancel</button></div>
+        </div>
         <div class="teacher-panel" id="teacherPanel">
 <div class="table-card">
         <div class="table-title">
@@ -325,6 +325,7 @@ td{color:#dce3ff}
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (() => {
 'use strict';
@@ -402,10 +403,16 @@ const adventures = {
   ]}
 };
 
-const STORAGE_KEY = 'wordOrbitAdventureRecordsV2';
 const BEST_KEY = 'wordOrbitAdventureBestV2';
 const MISSION_QUESTION_COUNT = 5;
 const CHECKPOINT_DISTANCE = 3000; // much longer flight time between questions
+
+// Public browser key only. Database permissions are enforced by Supabase RLS.
+const SUPABASE_URL = 'https://izgazkawunalymhrikob.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_2_9fuw67ivh_-RzSmvQdSw_qioviFXN';
+const TEACHER_EMAIL = 'g-40267937@moe-dl.edu.my';
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+let cloudRecords = [];
 
 const $ = id => document.getElementById(id);
 const canvas = $('space');
@@ -424,7 +431,7 @@ let musicOn = false, sfxOn = true, audioCtx = null, musicTimer = null, musicStep
 
 $('best').textContent = best;
 
-function safeText(v){return String(v || '').replace(/[<>&"]/g, s => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[s]));}
+function safeText(v){return String(v ?? '').replace(/[<>&"]/g, s => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[s]));}
 function nowString(){return new Date().toLocaleString();}
 function shuffle(arr){
   const a = arr.slice();
@@ -466,65 +473,77 @@ document.querySelectorAll('.planet-btn').forEach(btn => {
   });
 });
 
-function loadRecords(){
-  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }catch(e){ return []; }
-}
-function saveRecords(records){ localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
-function addRecord(record){
-  const records = loadRecords();
-  records.push(record);
-  saveRecords(records);
-  renderTables();
-}
 function renderTables(){
-  const records = loadRecords();
-  const leaderboardBody = $('leaderboardTable').querySelector('tbody');
   const recordsBody = $('recordsTable').querySelector('tbody');
-
-  const leaders = records.slice().sort((a,b) => b.score-a.score || b.correct-a.correct).slice(0,10);
-  leaderboardBody.innerHTML = leaders.length ? leaders.map((r,i)=>`
-    <tr><td>${i+1}</td><td>${safeText(r.name)}</td><td>${safeText(r.className)}</td><td>${safeText(r.adventureShort)}</td><td>${r.score}</td></tr>
-  `).join('') : '<tr><td colspan="5">No data yet.</td></tr>';
-
-  const latest = records.slice().sort((a,b)=> new Date(b.time)-new Date(a.time)).slice(0,20);
+  const latest = cloudRecords.slice().sort((a,b)=> new Date(b.played_at)-new Date(a.played_at)).slice(0,200);
   recordsBody.innerHTML = latest.length ? latest.map(r=>`
-    <tr><td>${safeText(r.name)}</td><td>${safeText(r.className)}</td><td>${safeText(r.adventureShort)}</td><td>${r.score}</td><td>${r.correct}/${MISSION_QUESTION_COUNT}</td><td>${safeText(r.time)}</td></tr>
+    <tr><td>${safeText(r.player_name)}</td><td>${safeText(r.class_name)}</td><td>${safeText(r.adventure_short || r.adventure_name)}</td><td>${Number(r.score)||0}</td><td>${Number(r.correct_answers)||0}/${MISSION_QUESTION_COUNT}</td><td>${safeText(r.played_at ? new Date(r.played_at).toLocaleString() : '')}</td></tr>
   `).join('') : '<tr><td colspan="6">No records yet.</td></tr>';
 }
-renderTables();
 
-function exportCSV(){
-  const records = loadRecords();
-  if(!records.length){ alert('No data to export yet.'); return; }
-  const header = ['Name','Class','Adventure','Score','Correct','Stars','Time'];
-  const rows = records.map(r=>[r.name,r.className,r.adventureName,r.score,r.correct,r.stars,r.time]);
-  const csv = [header, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
+async function fetchTeacherRecords(){
+  const { data, error } = await supabaseClient
+    .from('word_orbit_scores')
+    .select('id,player_name,class_name,adventure_name,adventure_short,score,correct_answers,stars,maps_completed,maps_visited,played_at')
+    .order('played_at', {ascending:false})
+    .limit(1000);
+  if(error){ alert('Could not load teacher records: ' + error.message); return; }
+  cloudRecords = data || [];
+  renderTables();
+}
+
+async function exportCSV(){
+  if(!cloudRecords.length){ alert('No records to export yet.'); return; }
+  const header = ['Name','Class','Adventure','Score','Correct','Stars','Maps completed','Maps visited','Time'];
+  const rows = cloudRecords.map(r=>[r.player_name,r.class_name,r.adventure_name,r.score,r.correct_answers,r.stars,r.maps_completed,r.maps_visited,r.played_at]);
+  const csv = [header, ...rows].map(row => row.map(v => `"${String(v ?? '').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'word_orbit_teacher_records.csv';
   a.click();
   URL.revokeObjectURL(a.href);
 }
-function clearData(){
-  if(!confirm('Clear all leaderboard and teacher records?')) return;
-  localStorage.removeItem(STORAGE_KEY);
+
+async function clearData(){
+  if(!confirm('Delete ALL Word Orbit records from the online database? This cannot be undone.')) return;
+  const { error } = await supabaseClient.from('word_orbit_scores').delete().not('id','is',null);
+  if(error){ alert('Could not clear records: ' + error.message); return; }
+  cloudRecords = [];
   renderTables();
+  alert('Online records have been cleared.');
 }
 $('exportBtn').addEventListener('click', exportCSV);
 $('clearBtn').addEventListener('click', clearData);
-// Basic screen lock for teacher controls. Change this PIN before sharing.
-const TEACHER_PIN = '4826';
 $('teacherLoginBtn').addEventListener('click', () => {
-  const pin = prompt('Teacher access only. Enter the teacher PIN:');
-  if(pin === TEACHER_PIN){
-    $('teacherPanel').classList.add('unlocked');
-    $('teacherLoginBtn').textContent = 'Teacher Access Unlocked';
-  } else if(pin !== null) {
-    alert('Incorrect PIN. Teacher records remain locked.');
-  }
+  $('teacherLoginForm').classList.toggle('open');
 });
-$('teacherLogoutBtn').addEventListener('click', () => {
+$('teacherCancelBtn').addEventListener('click', () => {
+  $('teacherLoginForm').classList.remove('open');
+  $('teacherPasswordInput').value = '';
+});
+$('teacherSignInBtn').addEventListener('click', async () => {
+  const email = $('teacherEmailInput').value.trim().toLowerCase();
+  const password = $('teacherPasswordInput').value;
+  if(email !== TEACHER_EMAIL){ alert('This email is not authorised for teacher records.'); return; }
+  if(!password){ alert('Please enter your teacher password.'); return; }
+  const { data, error } = await supabaseClient.auth.signInWithPassword({email, password});
+  if(error){ alert('Teacher sign-in failed: ' + error.message); return; }
+  if(!data.user || (data.user.email || '').toLowerCase() !== TEACHER_EMAIL){
+    await supabaseClient.auth.signOut();
+    alert('This account is not authorised for teacher records.');
+    return;
+  }
+  $('teacherPasswordInput').value = '';
+  $('teacherLoginForm').classList.remove('open');
+  $('teacherPanel').classList.add('unlocked');
+  $('teacherLoginBtn').textContent = 'Teacher Access Unlocked';
+  await fetchTeacherRecords();
+});
+$('teacherLogoutBtn').addEventListener('click', async () => {
+  await supabaseClient.auth.signOut();
+  cloudRecords = [];
+  renderTables();
   $('teacherPanel').classList.remove('unlocked');
   $('teacherLoginBtn').textContent = 'Teacher Login';
 });
@@ -804,20 +823,32 @@ function boost(){
   trail.push({x:ship.x-25, y:ship.y+4, life:18});
   playTone(340,.05,'triangle',.022);
 }
-function saveSession(){
+async function saveSession(){
   if(sessionSaved) return;
   sessionSaved = true;
+  const playerName = getPlayerName();
+  const className = getPlayerClass();
+  if(!playerName || !className){
+    alert('Please enter your name and class before playing so your result can be saved.');
+    return;
+  }
   const record = {
-    name: getPlayerName() || 'Unknown',
-    className: getPlayerClass() || '-',
-    adventureName: adventures[currentAdventure].name,
-    adventureShort: adventures[currentAdventure].short,
+    player_name: playerName,
+    class_name: className,
+    adventure_name: adventures[currentAdventure].name,
+    adventure_short: adventures[currentAdventure].short,
     score,
-    correct: correctAnswers,
+    correct_answers: correctAnswers,
     stars: starsCollected,
-    time: nowString()
+    maps_completed: mapsCompleted,
+    maps_visited: visitedMaps.join(', ')
   };
-  addRecord(record);
+  const { error } = await supabaseClient.from('word_orbit_scores').insert(record);
+  if(error){
+    alert('Your result could not be saved online. Please tell your teacher and show this message: ' + error.message);
+  } else {
+    alert('Mission result saved successfully!');
+  }
   if(score > best){
     best = score;
     localStorage.setItem(BEST_KEY, String(best));
@@ -981,8 +1012,8 @@ function resetGame(){
 }
 
 function startMission(){
-  if(!getPlayerName()){
-    $('feedback').textContent = 'Please enter the pupil name first.';
+  if(!getPlayerName() || !getPlayerClass()){
+    $('feedback').textContent = 'Please enter both pupil name and class first.';
     $('feedback').style.color = '#ffd166';
     return;
   }
