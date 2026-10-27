@@ -285,9 +285,16 @@ td{color:#dce3ff}
         <div class="stat"><b id="best">0</b><span>Best</span></div>
       </div>
 
-<div class="table-card">
-        <div class="table-title"><h3>🏆 Galaxy Progress</h3><span class="note">Teacher-managed records</span></div>
-        <p class="note">Pupil names, classes and scores are kept private. Ask your teacher to view the class leaderboard.</p>
+<div class="table-card public-leaderboard">
+        <div class="table-title"><h3>🏆 Galaxy Leaderboard</h3><button class="secondary tiny" id="refreshLeaderboardBtn" type="button">↻ Refresh</button></div>
+        <p class="note">Top explorers are shown to everyone. Use a first name or nickname only; scores and class names shown here are public.</p>
+        <div class="scroll">
+          <table id="leaderboardTable">
+            <thead><tr><th>#</th><th>Explorer</th><th>Class</th><th>Score</th><th>Stars</th></tr></thead>
+            <tbody><tr><td colspan="5">Loading leaderboard…</td></tr></tbody>
+          </table>
+        </div>
+        <p class="note" id="leaderboardStatus" aria-live="polite">Connecting to the online leaderboard…</p>
       </div>
 
       <div class="table-card teacher-lock">
@@ -472,6 +479,30 @@ document.querySelectorAll('.planet-btn').forEach(btn => {
     $('dialogText').textContent = 'You chose ' + adventures[currentAdventure].name + '! Answer the launch question, then fly through the galaxy. After this adventure, your journey will continue to another unexplored map.';
   });
 });
+
+async function fetchPublicLeaderboard(){
+  const body = $('leaderboardTable').querySelector('tbody');
+  const status = $('leaderboardStatus');
+  body.innerHTML = '<tr><td colspan="5">Loading leaderboard…</td></tr>';
+  const { data, error } = await supabaseClient
+    .from('word_orbit_scores')
+    .select('player_name,class_name,score,stars,played_at')
+    .order('score', {ascending:false})
+    .order('played_at', {ascending:true})
+    .limit(10);
+  if(error){
+    body.innerHTML = '<tr><td colspan="5">Leaderboard is not available yet.</td></tr>';
+    status.textContent = 'The teacher may need to enable public leaderboard access in Supabase.';
+    console.warn('Public leaderboard could not load:', error.message);
+    return;
+  }
+  const rows = data || [];
+  body.innerHTML = rows.length ? rows.map((r,i)=>`
+    <tr><td>${i+1}</td><td>${safeText(r.player_name)}</td><td>${safeText(r.class_name)}</td><td><b>${Number(r.score)||0}</b></td><td>⭐ ${Number(r.stars)||0}</td></tr>
+  `).join('') : '<tr><td colspan="5">No scores yet. Be the first explorer!</td></tr>';
+  status.textContent = rows.length ? `Showing the top ${rows.length} scores · updates when refreshed.` : 'Your score can appear here after your first mission.';
+}
+$('refreshLeaderboardBtn').addEventListener('click', fetchPublicLeaderboard);
 
 function renderTables(){
   const recordsBody = $('recordsTable').querySelector('tbody');
@@ -848,6 +879,7 @@ async function saveSession(){
     alert('Your result could not be saved online. Please tell your teacher and show this message: ' + error.message);
   } else {
     alert('Mission result saved successfully!');
+    await fetchPublicLeaderboard();
   }
   if(score > best){
     best = score;
@@ -1081,6 +1113,7 @@ document.addEventListener('keydown', e => {
 
 setActiveMapButton();
 resetGame();
+fetchPublicLeaderboard();
 })();
 </script>
 </body>
