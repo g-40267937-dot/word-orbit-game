@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0f1438">
+<title>Word Orbit: Galaxy Adventure Map</title>
+<style>
+:root{
+  --bg1:#0b1030; --bg2:#141c4d; --bg3:#232c72;
+  --card:#12193c; --card2:#0f1534; --line:#7b8bf455;
+  --text:#f8fbff; --muted:#b6c4f1; --gold:#ffd166; --cyan:#6ee7f9;
+  --green:#59e1a0; --red:#fb7185; --violet:#a18bff; --blue:#89abff; --orange:#ff9e68;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; color:var(--text);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:
+    radial-gradient(circle at 12% 10%, #3d4db733 0, transparent 18%),
+    radial-gradient(circle at 90% 12%, #8e7dff33 0, transparent 20%),
+    radial-gradient(circle at 72% 85%, #3cd1ff22 0, transparent 20%),
+    linear-gradient(160deg, var(--bg3) 0, var(--bg2) 44%, var(--bg1) 100%);
+  padding:14px;
+}
+button, input{font:inherit}
+button{
+  cursor:pointer; border:0; border-radius:12px; padding:11px 15px; font-weight:800;
+  transition:transform .12s, filter .12s, background .2s;
+}
+button:hover{transform:translateY(-1px); filter:brightness(1.04)}
+button:focus-visible, input:focus-visible{outline:3px solid var(--gold); outline-offset:3px}
+.app{
+  width:min(1280px, 100%); margin:auto; border:1px solid #7c8aff4d; border-radius:24px; overflow:hidden;
+  background:linear-gradient(180deg, #12183ae8, #0d1331ef);
+  box-shadow:0 26px 90px #0008;
+}
+header{
+  display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+  padding:18px 22px; background:linear-gradient(100deg,#171d4b,#262d6c 58%,#223078);
+  border-bottom:1px solid #ffffff18;
+}
+.brand{display:flex; align-items:center; gap:14px}
+.logo{
+  width:58px; height:58px; border-radius:18px; display:grid; place-items:center; font-size:30px;
+  background:linear-gradient(145deg, var(--gold), #ffb84d 55%, #ff807a);
+  color:#341f52; box-shadow:0 10px 30px #ffbf4d4c;
+}
+h1{margin:0; font-size:clamp(1.45rem,3vw,2.15rem); letter-spacing:-.9px}
+.sub{font-size:.87rem; color:#d1dbfa; margin-top:4px}
+.badges{display:flex; gap:8px; flex-wrap:wrap}
+.badge{
+  border:1px solid #96a4ff48; background:#ffffff0c; padding:8px 12px; border-radius:999px;
+  font-size:.8rem; font-weight:800; color:#eef2ff;
+}
+main{display:grid; grid-template-columns:minmax(0,1.58fr) minmax(320px,.88fr); gap:18px; padding:18px}
+.game-col{min-width:0}
+.panel{
+  border:1px solid var(--line); border-radius:20px; padding:15px; background:linear-gradient(160deg,#171d49,#111734);
+  min-width:0;
+}
+.panel h2{margin:0 0 12px; font-size:1.14rem}
+.map-card{
+  margin-bottom:12px; padding:14px; border:1px solid var(--line); border-radius:18px;
+  background:linear-gradient(140deg,#1b2355,#0f1636);
+}
+.map-card h2{margin:0 0 8px; font-size:1.16rem}
+.map-card p{margin:0 0 10px; color:var(--muted); font-size:.9rem; line-height:1.55}
+.map-wrap{
+  position:relative; border-radius:16px; overflow:hidden; border:1px solid #7d8fff44;
+  background:linear-gradient(180deg,#0d143a,#172154); min-height:270px;
+}
+.map-wrap svg{display:block; width:100%; height:auto}
+.planet-btn{
+  position:absolute; min-width:92px; padding:7px 10px; border:1px solid #b9c4ff44;
+  background:#182150dd; color:#fff; font-size:.74rem; border-radius:999px;
+  box-shadow:0 8px 20px #0004;
+}
+.planet-btn.active{background:linear-gradient(100deg,#ffd166,#ffb84d); color:#37234f; border-color:#ffd166}
+.planet-btn.visited{background:#11162fdd;color:#b6c4f1;border:2px dashed #59e1a0;text-decoration:line-through;opacity:.78;cursor:not-allowed}
+.planet-btn:disabled{pointer-events:none}
+.teacher-lock{margin-top:12px}
+.teacher-panel{display:none}
+.teacher-panel.unlocked{display:block}
+
+.planet-btn:hover{filter:brightness(1.08)}
+.p1{left:8%; top:10%}.p2{left:31%; top:22%}.p3{left:61%; top:8%}.p4{left:74%; top:28%}.p5{left:12%; top:42%}
+.p6{left:40%; top:46%}.p7{left:68%; top:51%}.p8{left:18%; top:70%}.p9{left:47%; top:74%}.p10{left:74%; top:74%}
+
+.screenbox{
+  position:relative; border-radius:20px; overflow:hidden; border:1px solid #7a8aff66; background:#070b22;
+}
+canvas{display:block; width:100%; height:auto; aspect-ratio:4/3; touch-action:manipulation}
+.overlay{
+  position:absolute; inset:0; background:#080b23dd; display:flex; align-items:center; justify-content:center;
+  padding:18px; backdrop-filter:blur(4px);
+}
+.overlay.hidden{display:none}
+.dialog{
+  width:min(540px,100%); background:linear-gradient(145deg,#20285f,#12183d);
+  border:1px solid #8391ff70; border-radius:22px; padding:22px; text-align:center; box-shadow:0 18px 50px #0008;
+}
+.dialog .icon{font-size:52px}
+.dialog h2{margin:10px 0 6px; font-size:clamp(1.45rem,3vw,2rem)}
+.dialog p{margin:0 0 16px; color:#d4ddf7; line-height:1.55}
+.primary{background:linear-gradient(100deg,var(--gold),#ffb84d); color:#312347}
+.secondary{background:#28305f; color:#f5f7ff; border:1px solid #6f7fcf}
+.tiny{font-size:.85rem; padding:8px 11px}
+.controls{display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-top:10px}
+.hint{text-align:center; color:var(--muted); font-size:.82rem; margin:10px 0 0}
+.teacher-card{
+  display:grid; grid-template-columns:96px 1fr; gap:11px; align-items:center;
+  background:linear-gradient(145deg,#111735,#20295d); border:1px solid #7181dc44; border-radius:15px; padding:12px; margin-bottom:12px;
+}
+.teacher-card p{margin:0; color:var(--muted); font-size:.83rem; line-height:1.5}
+.field{display:grid; gap:6px; margin-bottom:11px}
+.field label{font-size:.8rem; color:#d3dcff; font-weight:800; letter-spacing:.2px}
+.field input{
+  width:100%; padding:10px 11px; border-radius:11px; border:1px solid #6272c6; background:#0d1331; color:#fff;
+}
+.qbox{
+  background:#0d1330; border:1px solid #5f6fc344; border-radius:16px; padding:13px; margin:13px 0;
+}
+.qmeta{font-size:.72rem; font-weight:900; color:var(--cyan); letter-spacing:1px; text-transform:uppercase}
+.qbox h3{font-size:1.02rem; line-height:1.45; margin:7px 0 10px}
+.answers{display:grid; gap:7px}
+.answer{
+  width:100%; text-align:left; background:#262e5e; color:#f4f7ff; border:1px solid #4e5ea8; padding:10px 11px;
+}
+.answer.correct{background:#13463f; border-color:var(--green)}
+.answer.wrong{background:#532740; border-color:var(--red)}
+.feedback{min-height:42px; padding-top:8px; color:#d4ddf7; font-size:.9rem; font-weight:700; line-height:1.45}
+.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:7px; margin-top:8px}
+.stat{
+  background:#202850; border:1px solid #5968b6; border-radius:13px; padding:10px 5px; text-align:center;
+}
+.stat b{display:block; font-size:1.18rem; color:var(--gold)}
+.stat span{display:block; font-size:.71rem; color:#c7d2fb}
+.table-card{
+  margin-top:12px; background:#0f1432; border:1px solid #5d6dbc44; border-radius:15px; padding:11px; overflow:hidden;
+}
+.table-title{display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px}
+.table-title h3{margin:0; font-size:.97rem}
+.scroll{max-height:220px; overflow:auto; border-radius:10px}
+table{width:100%; border-collapse:collapse; font-size:.78rem}
+th,td{padding:8px 7px; border-bottom:1px solid #ffffff12; text-align:left; vertical-align:top}
+th{position:sticky; top:0; background:#1c2552; color:#fff; z-index:1}
+td{color:#dce3ff}
+.small-actions{display:flex; gap:7px; flex-wrap:wrap}
+.small-actions button{padding:7px 10px; font-size:.78rem}
+.note{font-size:.78rem; color:#b9c6ef; line-height:1.52}
+.footer{
+  padding:14px 19px; border-top:1px solid #ffffff14; background:#0c112d;
+  color:#aebbe8; font-size:.77rem; line-height:1.58;
+}
+@media (max-width:980px){
+  main{grid-template-columns:1fr; padding:12px}
+  .panel{order:2}
+}
+@media (max-width:720px){
+  body{padding:8px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .planet-btn{font-size:.66rem; min-width:74px; padding:6px 8px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">🚀</div>
+      <div>
+        <h1>Word Orbit: Galaxy Adventure Map</h1>
+        <div class="sub">Year 4 English Space Adventure · KSSR · CEFR A1 High · 5 unique questions per adventure</div>
+      </div>
+    </div>
+    <div class="badges">
+      <span class="badge">🗺️ Adventure Map</span>
+      <span class="badge">🏆 Leaderboard</span>
+      <span class="badge">🎵 Adventure Music</span>
+      <span class="badge">📘 10 Adventures</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="game-col">
+      <div class="map-card">
+        <h2>Pick an Adventure and Start Exploring!</h2>
+        <p>You are the explorer! Choose <b>any adventure map you like</b>. Every adventure has 5 questions. Answer the launch question, then fly through space and collect stars before your next checkpoint.</p>
+        <div class="map-wrap">
+          <svg viewBox="0 0 900 320" aria-hidden="true">
+            <defs>
+              <linearGradient id="spacebg" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#0f1438"/>
+                <stop offset="1" stop-color="#202a6f"/>
+              </linearGradient>
+            </defs>
+            <rect width="900" height="320" fill="url(#spacebg)"/>
+            <g opacity=".8" fill="#e7f4ff">
+              <circle cx="25" cy="26" r="2"/><circle cx="88" cy="48" r="1.7"/><circle cx="142" cy="76" r="1.4"/>
+              <circle cx="222" cy="38" r="1.9"/><circle cx="305" cy="62" r="1.4"/><circle cx="388" cy="30" r="1.5"/>
+              <circle cx="440" cy="88" r="1.9"/><circle cx="531" cy="55" r="1.5"/><circle cx="620" cy="42" r="1.5"/>
+              <circle cx="710" cy="62" r="1.9"/><circle cx="818" cy="36" r="1.8"/><circle cx="865" cy="90" r="1.6"/>
+              <circle cx="90" cy="196" r="1.8"/><circle cx="218" cy="168" r="1.4"/><circle cx="356" cy="196" r="1.5"/>
+              <circle cx="514" cy="170" r="1.7"/><circle cx="608" cy="216" r="1.6"/><circle cx="750" cy="182" r="1.8"/>
+              <circle cx="835" cy="250" r="1.5"/><circle cx="666" cy="280" r="1.3"/><circle cx="440" cy="258" r="1.6"/>
+            </g>
+            <path d="M110 52 C170 80, 210 110, 270 110 S390 50, 470 60 S600 130, 690 140 S765 220, 825 245" fill="none" stroke="#97a5ff" stroke-width="5" stroke-linecap="round" stroke-dasharray="12 12" opacity=".7"/>
+            <g>
+              <circle cx="98" cy="58" r="28" fill="#4a79ff"/><circle cx="98" cy="58" r="10" fill="#bdd4ff"/>
+              <circle cx="280" cy="118" r="24" fill="#40c6ff"/><circle cx="280" cy="118" r="8" fill="#c6f2ff"/>
+              <circle cx="550" cy="55" r="30" fill="#9b8cff"/><ellipse cx="550" cy="55" rx="44" ry="10" fill="none" stroke="#c9beff" stroke-width="5"/>
+              <circle cx="720" cy="130" r="24" fill="#ff9f68"/><circle cx="720" cy="130" r="8" fill="#ffd6c2"/>
+              <circle cx="150" cy="208" r="29" fill="#59e1a0"/><circle cx="150" cy="208" r="10" fill="#d6ffed"/>
+              <circle cx="398" cy="182" r="24" fill="#ffd166"/><circle cx="398" cy="182" r="8" fill="#fff1c2"/>
+              <circle cx="650" cy="200" r="28" fill="#fb7185"/><circle cx="650" cy="200" r="10" fill="#ffd4dc"/>
+              <circle cx="210" cy="274" r="27" fill="#6ee7f9"/><circle cx="210" cy="274" r="10" fill="#dffbff"/>
+              <circle cx="470" cy="278" r="26" fill="#8bc34a"/><circle cx="470" cy="278" r="9" fill="#e7ffc9"/>
+              <circle cx="775" cy="258" r="30" fill="#b39ddb"/><circle cx="775" cy="258" r="10" fill="#f0e7ff"/>
+              <g transform="translate(422 118)">
+                <path d="M-24 -7 L16 -7 L32 0 L16 7 L-24 7 Z" fill="#ffd166"/>
+                <circle cx="2" cy="0" r="8" fill="#dceaff"/><circle cx="2" cy="0" r="5" fill="#84d2ff"/>
+                <path d="M-24 -6 L-42 0 L-24 6 Z" fill="#ff9e68"/>
+              </g>
+            </g>
+          </svg>
+          <button class="planet-btn p1 active" data-map="1">1 Origins</button>
+          <button class="planet-btn p2" data-map="2">2 My Week</button>
+          <button class="planet-btn p3" data-map="3">3 Time Trail</button>
+          <button class="planet-btn p4" data-map="4">4 Festival</button>
+          <button class="planet-btn p5" data-map="5">5 Foodie</button>
+          <button class="planet-btn p6" data-map="6">6 Transit</button>
+          <button class="planet-btn p7" data-map="7">7 Helpers</button>
+          <button class="planet-btn p8" data-map="8">8 Animals</button>
+          <button class="planet-btn p9" data-map="9">9 Sports</button>
+          <button class="planet-btn p10" data-map="10">10 Health</button>
+        </div>
+      </div>
+
+      <div class="screenbox">
+        <canvas id="space" width="800" height="600" aria-label="Word Orbit Game"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="dialog">
+            <div class="icon" id="dialogIcon">🚀</div>
+            <h2 id="dialogTitle">Ready for your English space adventure?</h2>
+            <p id="dialogText">Enter the pupil’s name and class, answer the launch question, then fly through space. There are <b>5 questions only</b> in each adventure map.</p>
+            <button class="primary" id="launchBtn">Start mission 🚀</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="secondary tiny" id="pauseBtn">Ⅱ Pause</button>
+        <button class="secondary tiny" id="restartBtn">↻ Restart</button>
+        <button class="secondary tiny" id="musicBtn">🎵 Music: Off</button>
+        <button class="secondary tiny" id="sfxBtn">✨ SFX: On</button>
+      </div>
+      <p class="hint">Controls: click/tap the game area or press <b>Space</b> / <b>↑</b> to boost the spaceship.</p>
+    </section>
+
+    <aside class="panel">
+      <div class="field">
+        <label for="playerName">PUPIL NAME</label>
+        <input id="playerName" placeholder="e.g. Aisyah" maxlength="30">
+      </div>
+      <div class="field">
+        <label for="playerClass">CLASS / GROUP</label>
+        <input id="playerClass" placeholder="e.g. 4 Intelek" maxlength="30">
+      </div>
+
+      <div class="qbox" aria-live="polite">
+        <div class="qmeta" id="qMeta">LAUNCH QUESTION</div>
+        <h3 id="qText">Choose an adventure map and press Start Mission.</h3>
+        <div class="answers" id="answers"></div>
+        <div class="feedback" id="feedback">Correct answers give bonus points and a temporary shield.</div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><b id="score">0</b><span>Score</span></div>
+        <div class="stat"><b id="streak">0</b><span>Correct Streak</span></div>
+        <div class="stat"><b id="stars">0</b><span>Stars</span></div>
+        <div class="stat"><b id="best">0</b><span>Best</span></div>
+      </div>
+
+<div class="table-card">
+        <div class="table-title">
+          <h3>🏆 Leaderboard</h3>
+          <span class="note">Top 10 scores</span>
+        </div>
+        <div class="scroll">
+          <table id="leaderboardTable">
+            <thead><tr><th>#</th><th>Name</th><th>Class</th><th>Adventure</th><th>Score</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="table-card teacher-lock">
+        <div class="table-title"><h3>🔒 Teacher Access</h3><button class="secondary" id="teacherLoginBtn">Teacher Login</button></div>
+        <p class="note">Teacher records and data controls are hidden from the pupil screen.</p>
+        <div class="teacher-panel" id="teacherPanel">
+<div class="table-card">
+        <div class="table-title">
+          <h3>🧑‍🏫 Teacher Records</h3>
+          <div class="small-actions">
+            <button class="secondary" id="exportBtn">Export CSV</button>
+            <button class="secondary" id="clearBtn">Clear Data</button>
+          </div>
+        </div>
+        <div class="scroll">
+          <table id="recordsTable">
+            <thead><tr><th>Name</th><th>Class</th><th>Adventure</th><th>Score</th><th>Correct</th><th>Time</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+          <div class="small-actions" style="margin-top:10px"><button class="secondary" id="teacherLogoutBtn">Lock Teacher Access</button></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="footer">
+    <b>Sharing with pupils:</b> yes, you can use a QR code. First publish the HTML file online (for example on a school website, GitHub Pages, Netlify, or another approved host), then create a QR code that links to that public web address. Pupils can scan the QR code and open the game on their devices.
+  </div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const adventures = {
+  1:{short:'Origins', name:'Adventure 1 · Planet Origins (Where Are You From?)', questions:[
+    ['I am from Malaysia. I am ___.',['Malaysian','Mexican','British'],0,'Country: Malaysia. Nationality: Malaysian.'],
+    ['A person from Brazil is ___.',['Brazilian','Chinese','Korean'],0,'Brazil → Brazilian.'],
+    ['A person from the UK is ___.',['British','American','Mexican'],0,'UK → British.'],
+    ['Which activity uses black and white pieces on a board?',['play chess','ice-skating','go shopping'],0,'Chess uses pieces on a board.'],
+    ['A person from Korea is ___.',['Korean','British','Brazilian'],0,'Korea → Korean.']
+  ]},
+  2:{short:'My Week', name:'Adventure 2 · Weekly Wonders (My Week)', questions:[
+    ['Which subject uses numbers and calculations?',['Maths','Music','Art'],0,'Maths includes numbers and calculations.'],
+    ['We sing songs in ___.',['Music','Science','PE'],0,'Music is the subject for songs and sounds.'],
+    ['Before dinner, I help to ___.',['set the table','clear the table','shovel snow'],0,'Set the table before eating.'],
+    ['I use a rake to ___.',['rake leaves','feed the fish','go shopping'],0,'A rake helps to gather leaves.'],
+    ['After dinner, I can ___.',['clear the table','play badminton','buy a ticket'],0,'Clear the table after eating.']
+  ]},
+  3:{short:'Time Trail', name:'Adventure 3 · Time Travel Trail (In the Past)', questions:[
+    ['Yesterday, I ___ up at seven.',['woke','wake','wakes'],0,'The past form is woke up.'],
+    ['The past form of "draw" is ___.',['drew','drawed','drawing'],0,'Draw → drew.'],
+    ['Last week, we ___ to the museum.',['went','go','goes'],0,'Go → went.'],
+    ['The past form of "teach" is ___.',['taught','teached','teaching'],0,'Teach → taught.'],
+    ['I ___ my pencil under the desk.',['found','find','finding'],0,'Find → found.']
+  ]},
+  4:{short:'Festival', name:'Adventure 4 · Festival Galaxy (Celebrations)', questions:[
+    ['People may watch ___ in the sky during celebrations.',['fireworks','handlebars','pavement'],0,'Fireworks are seen in the sky during celebrations.'],
+    ['Special clothes for a role or event are called a ___.',['costume','carton','helmet'],0,'A costume is special clothing.'],
+    ['The ordinal number after second is ___.',['third','first','twentieth'],0,'First, second, third.'],
+    ['We can ___ the room with colourful flags.',['decorate','arrive','rake'],0,'Decorate means make a place look attractive.'],
+    ['A person who keeps people safe and enforces the law is a ___.',['police officer','dentist','artist'],0,'A police officer helps keep people safe.']
+  ]},
+  5:{short:'Foodie', name:'Adventure 5 · Foodie Nebula (Eating Right)', questions:[
+    ['Which one is a fruit?',['pear','butter','flour'],0,'A pear is a fruit.'],
+    ['Milk is often sold in a ___.',['carton','helmet','racket'],0,'Milk is often sold in a carton.'],
+    ['Which food is made from milk?',['cheese','rice','carrot'],0,'Cheese is made from milk.'],
+    ['We use flour to make bread and ___.',['cakes','tickets','costumes'],0,'Flour is used in baking cakes and bread.'],
+    ['A sweet ingredient used in drinks and baking is ___.',['sugar','seat belt','helmet'],0,'Sugar is sweet.']
+  ]},
+  6:{short:'Transit', name:'Adventure 6 · Transit Trek (Getting Around)', questions:[
+    ['You should wear a ___ when riding a bike.',['helmet','costume','scarf'],0,'A helmet protects your head.'],
+    ['People should cross the road at a ___.',['zebra crossing','pyramid','basket'],0,'A zebra crossing is a safe place to cross.'],
+    ['A train travels on ___.',['tracks','pavements','water'],0,'Trains travel on railway tracks.'],
+    ['RM2.50 is two ringgit and fifty ___.',['sen','minutes','tickets'],0,'One ringgit has 100 sen.'],
+    ['When you reach your destination, you ___.',['arrive','leave','wrap'],0,'Arrive means reach a place.']
+  ]},
+  7:{short:'Helpers', name:'Adventure 7 · Helper Base (Helping Out)', questions:[
+    ['I give water to the plants. I ___.',['water the plants','rake leaves','clear the table'],0,'That action is water the plants.'],
+    ['We sleep in a ___ when camping.',['tent','carton','train'],0,'A tent is used during camping.'],
+    ['Which item helps us see in the dark?',['torch','basket','ticket'],0,'A torch gives light.'],
+    ['After dinner, I can help to ___.',['clear the table','set the table','play chess'],0,'Clear the table after eating.'],
+    ['To keep warm while sleeping outdoors, we use a ___.',['sleeping bag','seat belt','bottle'],0,'A sleeping bag keeps you warm.']
+  ]},
+  8:{short:'Animals', name:'Adventure 8 · Animal Cosmos (Amazing Animals)', questions:[
+    ['A giraffe has a very ___ neck.',['long','short','tiny'],0,'A giraffe is known for its long neck.'],
+    ['A tiger has ___ on its body.',['stripes','feathers','wheels'],0,'Tigers have stripes.'],
+    ['Which animal has a trunk?',['elephant','dolphin','snake'],0,'An elephant has a trunk.'],
+    ['A tortoise usually moves ___.',['slowly','loudly','yesterday'],0,'Slowly describes how a tortoise moves.'],
+    ['A dolphin lives in the ___.',['sea','desert','library'],0,'A dolphin lives in the sea.']
+  ]},
+  9:{short:'Sports', name:'Adventure 9 · Sports Orbit (Get Active!)', questions:[
+    ['You use a racket to play ___.',['badminton','swimming','football'],0,'Badminton is played with a racket.'],
+    ['Which activity takes place in water?',['swimming','ice-skating','karate'],0,'Swimming takes place in water.'],
+    ['The opposite of "boring" is ___.',['exciting','slow','weak'],0,'Exciting is the opposite of boring.'],
+    ['A group playing together is a ___.',['team','ticket','carton'],0,'A team is a group of players.'],
+    ['You need a ball to play ___.',['football','reading','camping'],0,'Football is played with a ball.']
+  ]},
+  10:{short:'Health', name:'Adventure 10 · Health Station (What’s the Matter?)', questions:[
+    ['My tooth hurts. I have a ___.',['toothache','headache','cold'],0,'Toothache is pain in a tooth.'],
+    ['A ___ helps care for your teeth.',['dentist','pilot','farmer'],0,'A dentist looks after teeth.'],
+    ['Which word describes a person who is not well?',['sick','exciting','cheap'],0,'Sick means unwell.'],
+    ['If you have a high temperature, you may have a ___.',['fever','racket','costume'],0,'A fever is a high body temperature.'],
+    ['My head hurts. I have a ___.',['headache','umbrella','giraffe'],0,'Headache means pain in the head.']
+  ]}
+};
+
+const STORAGE_KEY = 'wordOrbitAdventureRecordsV2';
+const BEST_KEY = 'wordOrbitAdventureBestV2';
+const MISSION_QUESTION_COUNT = 5;
+const CHECKPOINT_DISTANCE = 3000; // much longer flight time between questions
+
+const $ = id => document.getElementById(id);
+const canvas = $('space');
+const ctx = canvas.getContext('2d');
+const overlay = $('overlay');
+
+let currentAdventure = 1;
+let score = 0, streak = 0, starsCollected = 0;
+let best = Number(localStorage.getItem(BEST_KEY) || 0);
+let correctAnswers = 0;
+let gameState = 'menu';
+let ship, asteroids, stars, trail, bgStars, frame = 0, speed = 3.15, distance = 0, checkpointAt = CHECKPOINT_DISTANCE, lastTime = 0;
+let questionQueue = [], questionIndex = 0, activeQuestion = null, answered = false, sessionSaved = false;
+let visitedMaps = [], mapsCompleted = 0;
+let musicOn = false, sfxOn = true, audioCtx = null, musicTimer = null, musicStep = 0;
+
+$('best').textContent = best;
+
+function safeText(v){return String(v || '').replace(/[<>&"]/g, s => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[s]));}
+function nowString(){return new Date().toLocaleString();}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; }
+  return a;
+}
+function getPlayerName(){ return $('playerName').value.trim(); }
+function getPlayerClass(){ return $('playerClass').value.trim(); }
+
+function updateStats(){
+  $('score').textContent = score;
+  $('streak').textContent = streak;
+  $('stars').textContent = starsCollected;
+  $('best').textContent = best;
+}
+
+function setActiveMapButton(){
+  document.querySelectorAll('.planet-btn').forEach(btn => {
+    const mapId = Number(btn.dataset.map);
+    const visited = visitedMaps.includes(mapId);
+    btn.classList.toggle('active', mapId === currentAdventure && !visited);
+    btn.classList.toggle('visited', visited);
+    btn.disabled = visited || ['playing','checkpoint','paused'].includes(gameState);
+    const label = btn.dataset.label || btn.textContent.replace(/^✓\s*/, '').replace(/\s+✓$/, '');
+    btn.dataset.label = label;
+    btn.textContent = visited ? '✓ ' + label : label;
+    btn.title = visited ? 'Already explored in this run' : 'Choose this adventure';
+  });
+}
+
+document.querySelectorAll('.planet-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const chosen = Number(btn.dataset.map);
+    if (visitedMaps.includes(chosen) || ['playing','checkpoint','paused'].includes(gameState)) return;
+    currentAdventure = chosen;
+    resetGame();
+    $('dialogTitle').textContent = 'Ready for ' + adventures[currentAdventure].short + '?';
+    $('dialogText').textContent = 'You chose ' + adventures[currentAdventure].name + '! Answer the launch question, then fly through the galaxy. After this adventure, your journey will continue to another unexplored map.';
+  });
+});
+
+function loadRecords(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }catch(e){ return []; }
+}
+function saveRecords(records){ localStorage.setItem(STORAGE_KEY, JSON.stringify(records)); }
+function addRecord(record){
+  const records = loadRecords();
+  records.push(record);
+  saveRecords(records);
+  renderTables();
+}
+function renderTables(){
+  const records = loadRecords();
+  const leaderboardBody = $('leaderboardTable').querySelector('tbody');
+  const recordsBody = $('recordsTable').querySelector('tbody');
+
+  const leaders = records.slice().sort((a,b) => b.score-a.score || b.correct-a.correct).slice(0,10);
+  leaderboardBody.innerHTML = leaders.length ? leaders.map((r,i)=>`
+    <tr><td>${i+1}</td><td>${safeText(r.name)}</td><td>${safeText(r.className)}</td><td>${safeText(r.adventureShort)}</td><td>${r.score}</td></tr>
+  `).join('') : '<tr><td colspan="5">No data yet.</td></tr>';
+
+  const latest = records.slice().sort((a,b)=> new Date(b.time)-new Date(a.time)).slice(0,20);
+  recordsBody.innerHTML = latest.length ? latest.map(r=>`
+    <tr><td>${safeText(r.name)}</td><td>${safeText(r.className)}</td><td>${safeText(r.adventureShort)}</td><td>${r.score}</td><td>${r.correct}/${MISSION_QUESTION_COUNT}</td><td>${safeText(r.time)}</td></tr>
+  `).join('') : '<tr><td colspan="6">No records yet.</td></tr>';
+}
+renderTables();
+
+function exportCSV(){
+  const records = loadRecords();
+  if(!records.length){ alert('No data to export yet.'); return; }
+  const header = ['Name','Class','Adventure','Score','Correct','Stars','Time'];
+  const rows = records.map(r=>[r.name,r.className,r.adventureName,r.score,r.correct,r.stars,r.time]);
+  const csv = [header, ...rows].map(row => row.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'word_orbit_teacher_records.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function clearData(){
+  if(!confirm('Clear all leaderboard and teacher records?')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  renderTables();
+}
+$('exportBtn').addEventListener('click', exportCSV);
+$('clearBtn').addEventListener('click', clearData);
+// Basic screen lock for teacher controls. Change this PIN before sharing.
+const TEACHER_PIN = '4826';
+$('teacherLoginBtn').addEventListener('click', () => {
+  const pin = prompt('Teacher access only. Enter the teacher PIN:');
+  if(pin === TEACHER_PIN){
+    $('teacherPanel').classList.add('unlocked');
+    $('teacherLoginBtn').textContent = 'Teacher Access Unlocked';
+  } else if(pin !== null) {
+    alert('Incorrect PIN. Teacher records remain locked.');
+  }
+});
+$('teacherLogoutBtn').addEventListener('click', () => {
+  $('teacherPanel').classList.remove('unlocked');
+  $('teacherLoginBtn').textContent = 'Teacher Login';
+});
+
+function ensureAudio(){
+  try{ audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+}
+function playTone(freq, dur=.12, type='triangle', gain=.04){
+  if(!sfxOn) return;
+  ensureAudio();
+  if(!audioCtx) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type; o.frequency.value = freq;
+  o.connect(g); g.connect(audioCtx.destination);
+  g.gain.value = gain;
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+  o.stop(audioCtx.currentTime + dur);
+}
+function playMusicNote(freq, dur=.24, type='triangle', gain=.017){
+  ensureAudio();
+  if(!audioCtx) return;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type; o.frequency.value = freq;
+  o.connect(g); g.connect(audioCtx.destination);
+  g.gain.value = gain;
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+  o.stop(audioCtx.currentTime + dur);
+}
+function startMusic(){
+  if(musicTimer) return;
+  const melody = [392,440,523.25,659.25,587.33,523.25,440,523.25,698.46,659.25,587.33,523.25];
+  const bass = [196,220,261.63,196,174.61,220];
+  musicTimer = setInterval(() => {
+    const n = melody[musicStep % melody.length];
+    const b = bass[musicStep % bass.length];
+    playMusicNote(n,.22,'triangle',.016);
+    if(musicStep % 2 === 0) playMusicNote(b,.38,'sine',.014);
+    if(musicStep % 4 === 1) playMusicNote(n*2,.12,'square',.007);
+    musicStep++;
+  }, 280);
+}
+function stopMusic(){
+  if(musicTimer){ clearInterval(musicTimer); musicTimer = null; }
+}
+$('musicBtn').addEventListener('click', () => {
+  musicOn = !musicOn;
+  $('musicBtn').textContent = '🎵 Music: ' + (musicOn ? 'On' : 'Off');
+  if(musicOn) startMusic(); else stopMusic();
+});
+$('sfxBtn').addEventListener('click', () => {
+  sfxOn = !sfxOn;
+  $('sfxBtn').textContent = '✨ SFX: ' + (sfxOn ? 'On' : 'Off');
+});
+
+function buildQuestionQueue(){
+  questionQueue = shuffle(adventures[currentAdventure].questions).slice(0, MISSION_QUESTION_COUNT);
+  questionIndex = 0;
+}
+function showQuestion(mode){
+  activeQuestion = questionQueue[questionIndex];
+  answered = false;
+  $('qMeta').textContent = mode === 'launch' ? 'LAUNCH QUESTION' : 'CHECKPOINT QUESTION';
+  $('qText').textContent = activeQuestion[0];
+  $('feedback').textContent = mode === 'launch'
+    ? 'Answer the launch question before take-off.'
+    : 'Answer this checkpoint question to continue your journey.';
+  $('feedback').style.color = '#d4ddf7';
+
+  const opts = shuffle(activeQuestion[1].map((txt,i)=>({txt, i})));
+  $('answers').innerHTML = '';
+  opts.forEach(opt => {
+    const b = document.createElement('button');
+    b.className = 'answer';
+    b.textContent = opt.txt;
+    b.onclick = () => answerQuestion(opt.i, b);
+    $('answers').appendChild(b);
+  });
+}
+function answerQuestion(index, btn){
+  if(answered) return;
+  answered = true;
+  const correct = activeQuestion[2];
+  const buttons = Array.from($('answers').children);
+  buttons.forEach(b => {
+    b.disabled = true;
+    if(b.textContent === activeQuestion[1][correct]) b.classList.add('correct');
+  });
+
+  if(index === correct){
+    correctAnswers++;
+    streak++;
+    score += questionIndex === 0 ? 20 : 15;
+    ship.shield = 240;
+    $('feedback').textContent = '✓ Correct! ' + activeQuestion[3];
+    $('feedback').style.color = '#59e1a0';
+    playTone(720,.08,'triangle',.03);
+  } else {
+    streak = 0;
+    btn.classList.add('wrong');
+    $('feedback').textContent = 'Not quite. ' + activeQuestion[3];
+    $('feedback').style.color = '#fb7185';
+    playTone(230,.16,'sawtooth',.028);
+  }
+  updateStats();
+}
+
+function initScene(){
+  ship = {x:170, y:300, vy:0, r:18, tilt:0, shield:0};
+  asteroids = Array.from({length:6}, (_,i)=>makeAsteroid(720 + i*250));
+  stars = Array.from({length:10}, (_,i)=>makeStar(560 + i*180));
+  trail = [];
+  bgStars = Array.from({length:120}, ()=>({
+    x:Math.random()*canvas.width,
+    y:Math.random()*canvas.height,
+    r:Math.random()*1.8+.4,
+    alpha:Math.random()*.7+.2
+  }));
+}
+function makeAsteroid(x){
+  return {x, y:70+Math.random()*440, r:20+Math.random()*13, rot:Math.random()*6.28, spin:(Math.random()-.5)*.05};
+}
+function makeStar(x){
+  return {x, y:70+Math.random()*450, r:9+Math.random()*5, tw:Math.random()*6, got:false};
+}
+function drawBackground(){
+  const g = ctx.createLinearGradient(0,0,0,canvas.height);
+  g.addColorStop(0,'#090d26'); g.addColorStop(1,'#1c2458');
+  ctx.fillStyle = g; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  bgStars.forEach(s => {
+    ctx.globalAlpha = s.alpha;
+    ctx.fillStyle = '#e9f6ff';
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  const neb = [
+    [120,110,110,'rgba(85,129,255,.08)'],
+    [650,90,90,'rgba(187,123,255,.09)'],
+    [560,470,160,'rgba(82,200,255,.06)']
+  ];
+  neb.forEach(n => {
+    const grad = ctx.createRadialGradient(n[0],n[1],0,n[0],n[1],n[2]);
+    grad.addColorStop(0,n[3]); grad.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(n[0],n[1],n[2],0,Math.PI*2); ctx.fill();
+  });
+
+  ctx.fillStyle = '#5f59b5';
+  ctx.beginPath(); ctx.arc(690,112,48,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#bdb8ff'; ctx.lineWidth = 7;
+  ctx.beginPath(); ctx.ellipse(690,112,70,16,-.25,0,Math.PI*2); ctx.stroke();
+
+  ctx.fillStyle = '#415da8';
+  ctx.beginPath(); ctx.arc(84,500,32,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle = '#ffd166';
+  ctx.beginPath(); ctx.arc(760,440,18,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle = '#fff5c2'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(740,440); ctx.lineTo(780,440); ctx.moveTo(760,420); ctx.lineTo(760,460); ctx.stroke();
+}
+function drawShip(){
+  ctx.save();
+  ctx.translate(ship.x, ship.y);
+  ctx.rotate(ship.tilt);
+
+  if(ship.shield > 0){
+    ctx.strokeStyle = 'rgba(110,231,249,.96)';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0,0,ship.r+13,0,Math.PI*2); ctx.stroke();
+  }
+
+  ctx.fillStyle = '#ff9559';
+  ctx.beginPath(); ctx.moveTo(-22,-7); ctx.lineTo(-40,0); ctx.lineTo(-22,7); ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#ffd166';
+  ctx.beginPath(); ctx.moveTo(-18,-15); ctx.lineTo(16,-15); ctx.lineTo(32,0); ctx.lineTo(16,15); ctx.lineTo(-18,15); ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#dde9ff';
+  ctx.beginPath(); ctx.arc(2,0,9,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle = '#7fc8ff';
+  ctx.beginPath(); ctx.arc(2,0,5.4,0,Math.PI*2); ctx.fill();
+
+  ctx.fillStyle = '#9b8cff';
+  ctx.beginPath(); ctx.moveTo(-10,-14); ctx.lineTo(-22,-27); ctx.lineTo(-2,-11); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-10,14); ctx.lineTo(-22,27); ctx.lineTo(-2,11); ctx.closePath(); ctx.fill();
+
+  ctx.fillStyle = '#ffcd5d';
+  ctx.beginPath(); ctx.moveTo(-40,-4); ctx.lineTo(-58,0); ctx.lineTo(-40,4); ctx.closePath(); ctx.fill();
+
+  ctx.restore();
+}
+function drawAsteroid(a){
+  ctx.save();
+  ctx.translate(a.x,a.y);
+  ctx.rotate(a.rot);
+  ctx.fillStyle = '#a8b6d1';
+  ctx.strokeStyle = '#dbe5f6';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  for(let i=0;i<9;i++){
+    const ang = i * Math.PI * 2 / 9;
+    const rr = a.r * (i%2 ? .78 : 1);
+    const x = Math.cos(ang)*rr, y = Math.sin(ang)*rr;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#7684a3';
+  ctx.beginPath(); ctx.arc(-6,-2,4,0,Math.PI*2); ctx.arc(6,6,3,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+function drawStarObj(s){
+  if(s.got) return;
+  ctx.save();
+  ctx.translate(s.x,s.y);
+  ctx.rotate(Math.sin(frame*.05+s.tw)*.25);
+  ctx.shadowColor = '#ffd166';
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = '#ffd166';
+  ctx.beginPath();
+  for(let i=0;i<10;i++){
+    const rr = i%2 ? s.r*.45 : s.r;
+    const ang = -Math.PI/2 + i * Math.PI/5;
+    const x = Math.cos(ang)*rr, y = Math.sin(ang)*rr;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.shadowBlur = 0;
+}
+function drawTrail(){
+  trail.forEach(p => {
+    ctx.globalAlpha = Math.max(0,p.life/18);
+    ctx.fillStyle = '#ffd166';
+    ctx.beginPath(); ctx.arc(p.x,p.y,4,0,Math.PI*2); ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+function drawHUD(){
+  ctx.fillStyle = 'rgba(13,18,48,.78)';
+  ctx.fillRect(18,16,210,44);
+  ctx.fillRect(530,16,252,44);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 18px system-ui';
+  ctx.fillText('✦ ' + score + ' ENERGY', 30, 44);
+  ctx.fillStyle = '#d9e2ff';
+  ctx.font = 'bold 13px system-ui';
+  ctx.fillText(adventures[currentAdventure].short.toUpperCase() + ' · Q ' + (Math.min(questionIndex+1, 5)) + '/5', 542, 42);
+
+  if(gameState === 'paused'){
+    ctx.fillStyle = 'rgba(11,14,39,.86)';
+    ctx.fillRect(272,245,256,100);
+    ctx.fillStyle = '#ffd166';
+    ctx.font = 'bold 30px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('PAUSED', 400, 302);
+    ctx.textAlign = 'left';
+  }
+}
+function draw(){
+  drawBackground();
+  stars.forEach(drawStarObj);
+  asteroids.forEach(drawAsteroid);
+  drawTrail();
+  drawShip();
+  drawHUD();
+}
+function collideCircles(a,b){
+  const dx = a.x-b.x, dy = a.y-b.y;
+  return Math.hypot(dx,dy) < a.r + b.r;
+}
+function boost(){
+  if(gameState !== 'playing') return;
+  ship.vy = -5.8;
+  ship.tilt = -.35;
+  trail.push({x:ship.x-25, y:ship.y+4, life:18});
+  playTone(340,.05,'triangle',.022);
+}
+function saveSession(){
+  if(sessionSaved) return;
+  sessionSaved = true;
+  const record = {
+    name: getPlayerName() || 'Unknown',
+    className: getPlayerClass() || '-',
+    adventureName: adventures[currentAdventure].name,
+    adventureShort: adventures[currentAdventure].short,
+    score,
+    correct: correctAnswers,
+    stars: starsCollected,
+    time: nowString()
+  };
+  addRecord(record);
+  if(score > best){
+    best = score;
+    localStorage.setItem(BEST_KEY, String(best));
+    $('best').textContent = best;
+  }
+}
+function showCheckpoint(){
+  gameState = 'checkpoint';
+  questionIndex++;
+  if(questionIndex >= MISSION_QUESTION_COUNT){
+    completeAdventure();
+    return;
+  }
+  showQuestion('checkpoint');
+  overlay.classList.remove('hidden');
+  $('dialogIcon').textContent = '🧠';
+  $('dialogTitle').textContent = 'Checkpoint reached!';
+  $('dialogText').textContent = 'Answer the next question, then keep flying. Your journey continues as long as your spaceship survives.';
+  $('launchBtn').textContent = 'Continue flight ➜';
+  setActiveMapButton();
+}
+function completeAdventure(){
+  if(!visitedMaps.includes(currentAdventure)){
+    visitedMaps.push(currentAdventure);
+    mapsCompleted++;
+  }
+  setActiveMapButton();
+  const remaining = Object.keys(adventures).map(Number).filter(id => !visitedMaps.includes(id));
+  if(remaining.length === 0){
+    finishMission();
+    return;
+  }
+  const next = remaining.find(id => id > currentAdventure) ?? remaining[0];
+  currentAdventure = next;
+  questionIndex = 0;
+  buildQuestionQueue();
+  distance = 0;
+  checkpointAt = CHECKPOINT_DISTANCE;
+  initScene();
+  showQuestion('launch');
+  gameState = 'checkpoint';
+  overlay.classList.remove('hidden');
+  $('dialogIcon').textContent = '🗺️';
+  $('dialogTitle').textContent = 'Adventure unlocked: ' + adventures[currentAdventure].short + '!';
+  $('dialogText').textContent = 'You completed the previous map! Your spaceship is continuing to a new unexplored adventure. Answer the launch question to keep going.';
+  $('launchBtn').textContent = 'Launch next adventure 🚀';
+  setActiveMapButton();
+}
+function finishMission(){
+  gameState = 'finished';
+  saveSession();
+  overlay.classList.remove('hidden');
+  $('dialogIcon').textContent = '🏆';
+  $('dialogTitle').textContent = 'Galaxy Explorer Champion!';
+  $('dialogText').textContent = 'You explored every adventure map! Maps completed: ' + mapsCompleted + '/10. Final score: ' + score + '. Correct answers: ' + correctAnswers + '.';
+  $('launchBtn').textContent = 'Start a new journey ↻';
+  stopMusic();
+  setActiveMapButton();
+}
+function endGame(){
+  gameState = 'over';
+  setActiveMapButton();
+  saveSession();
+  overlay.classList.remove('hidden');
+  $('dialogIcon').textContent = '🌠';
+  $('dialogTitle').textContent = 'Mission ended!';
+  $('dialogText').textContent = 'Your spaceship has been damaged. Maps explored: ' + mapsCompleted + '/10. Total score: ' + score + '. Correct answers: ' + correctAnswers + '. Your journey has ended.';
+  $('launchBtn').textContent = 'Try again ↻';
+  stopMusic();
+}
+function loop(now){
+  if(gameState !== 'playing') return;
+  const dt = Math.min((now-lastTime)/16.67, 2);
+  lastTime = now;
+  frame += dt;
+  distance += speed * dt * 3;
+
+  bgStars.forEach(s => {
+    s.x -= .48 * dt;
+    if(s.x < -2){ s.x = canvas.width + 2; s.y = Math.random()*canvas.height; }
+  });
+
+  ship.vy += .23 * dt;
+  ship.y += ship.vy * dt;
+  ship.tilt = Math.max(-.45, Math.min(.8, ship.vy*.07));
+  if(ship.shield > 0) ship.shield -= 1 * dt;
+
+  trail.forEach(p => { p.x -= 3.5 * dt; p.life -= 1*dt; });
+  trail = trail.filter(p => p.life > 0);
+
+  asteroids.forEach(a => {
+    a.x -= speed * dt;
+    a.rot += a.spin * dt;
+    if(a.x < -60){
+      a.x = canvas.width + Math.random()*280;
+      a.y = 70 + Math.random()*440;
+      a.r = 20 + Math.random()*13;
+    }
+    if(collideCircles({x:ship.x,y:ship.y,r:ship.r*.72}, a)){
+      if(ship.shield > 0){
+        a.x = canvas.width + Math.random()*250;
+        score += 3;
+        updateStats();
+        playTone(860,.05,'triangle',.02);
+      } else {
+        endGame();
+        return;
+      }
+    }
+  });
+
+  stars.forEach(s => {
+    s.x -= speed * dt;
+    if(s.x < -20){
+      s.x = canvas.width + Math.random()*260;
+      s.y = 70 + Math.random()*440;
+      s.got = false;
+    }
+    if(!s.got && collideCircles({x:ship.x,y:ship.y,r:ship.r*.72}, {x:s.x,y:s.y,r:s.r*.9})){
+      s.got = true;
+      starsCollected++;
+      score += 5;
+      updateStats();
+      playTone(920,.06,'sine',.03);
+    }
+  });
+
+  if(ship.y < 12 || ship.y > canvas.height - 12){
+    endGame();
+    return;
+  }
+
+  if(distance >= checkpointAt){
+    checkpointAt += CHECKPOINT_DISTANCE;
+    showCheckpoint();
+    draw();
+    return;
+  }
+
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function resetGame(){
+  visitedMaps = []; mapsCompleted = 0;
+  score = 0; streak = 0; starsCollected = 0; correctAnswers = 0;
+  frame = 0; speed = 3.15; distance = 0; checkpointAt = CHECKPOINT_DISTANCE;
+  gameState = 'ready'; sessionSaved = false;
+  buildQuestionQueue();
+  setActiveMapButton();
+  initScene();
+  updateStats();
+  showQuestion('launch');
+  overlay.classList.remove('hidden');
+  $('dialogIcon').textContent = '🚀';
+  $('dialogTitle').textContent = 'Ready for your English space adventure?';
+  $('dialogText').textContent = 'Answer the launch question first. Then you will fly for a much longer stretch before each new checkpoint question appears.';
+  $('launchBtn').textContent = 'Start mission 🚀';
+  $('pauseBtn').textContent = 'Ⅱ Pause';
+  draw();
+}
+
+function startMission(){
+  if(!getPlayerName()){
+    $('feedback').textContent = 'Please enter the pupil name first.';
+    $('feedback').style.color = '#ffd166';
+    return;
+  }
+  if(!answered){
+    $('feedback').textContent = 'Please answer the launch question first.';
+    $('feedback').style.color = '#ffd166';
+    return;
+  }
+  overlay.classList.add('hidden');
+  gameState = 'playing';
+  setActiveMapButton();
+  ship.vy = -2.4;
+  lastTime = performance.now();
+  if(musicOn) startMusic();
+  requestAnimationFrame(loop);
+}
+function continueMission(){
+  if(!answered){
+    $('feedback').textContent = 'Please answer the checkpoint question first.';
+    $('feedback').style.color = '#ffd166';
+    return;
+  }
+  overlay.classList.add('hidden');
+  gameState = 'playing';
+  setActiveMapButton();
+  lastTime = performance.now();
+  if(musicOn) startMusic();
+  requestAnimationFrame(loop);
+}
+
+$('launchBtn').addEventListener('click', () => {
+  if(gameState === 'ready' || gameState === 'menu'){
+    startMission();
+  } else if(gameState === 'checkpoint'){
+    continueMission();
+  } else if(gameState === 'finished' || gameState === 'over'){
+    resetGame();
+  }
+});
+$('pauseBtn').addEventListener('click', () => {
+  if(gameState === 'playing'){
+    gameState = 'paused';
+    setActiveMapButton();
+    $('pauseBtn').textContent = '▶ Resume';
+    stopMusic();
+    draw();
+  } else if(gameState === 'paused'){
+    gameState = 'playing';
+    setActiveMapButton();
+    $('pauseBtn').textContent = 'Ⅱ Pause';
+    lastTime = performance.now();
+    if(musicOn) startMusic();
+    requestAnimationFrame(loop);
+  }
+});
+$('restartBtn').addEventListener('click', resetGame);
+
+canvas.addEventListener('pointerdown', e => { e.preventDefault(); boost(); });
+document.addEventListener('keydown', e => {
+  if(e.code === 'Space' || e.code === 'ArrowUp'){
+    e.preventDefault();
+    boost();
+  }
+});
+
+setActiveMapButton();
+resetGame();
+})();
+</script>
+</body>
+</html>
